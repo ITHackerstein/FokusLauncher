@@ -1,0 +1,9 @@
+Assign actions to two-finger swipes on the home screen in the new Gestures settings page.
+
+Open app shortcuts from an app's long-press menu in the drawer.
+
+Stop missing favorites from triggering repeated app scans.
+
+Improve widget setup error handling and diagnostics.
+
+Keep extra home chips aligned with the other home content.
