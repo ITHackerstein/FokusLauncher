@@ -545,6 +545,13 @@ class PreferencesManager @Inject constructor(@param:ApplicationContext private v
     val homeNoteTextFlow: Flow<String> = prefFlow(HOME_NOTE_TEXT_KEY, "")
     suspend fun setHomeNoteText(text: String) = setPref(HOME_NOTE_TEXT_KEY, text)
 
+    /** Read-modify-write in one transaction so quick successive edits can't overwrite each other. */
+    suspend fun updateHomeNoteText(transform: (String) -> String) {
+        context.fokusLauncherPreferencesDataStore.edit { prefs ->
+            prefs[HOME_NOTE_TEXT_KEY] = transform(prefs[HOME_NOTE_TEXT_KEY] ?: "")
+        }
+    }
+
     val worldClockCitiesFlow: Flow<List<WorldClockCity>> =
             context.fokusLauncherPreferencesDataStore.data.map { prefs ->
                 parseWorldClockCities(prefs[WORLD_CLOCK_CITIES_KEY] ?: "")

@@ -1,8 +1,11 @@
 package com.lu4p.fokuslauncher.ui.home
 
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.doubleClick
@@ -440,6 +443,48 @@ class HomeScreenTest {
         composeTestRule
                 .onNodeWithText("Today\n☐ milk\n☑ eggs\n• bread")
                 .assertIsDisplayed()
+    }
+
+    @Test
+    fun homeScreen_noteWidget_tapTaskTogglesAndOtherTapsEdit() {
+        val toggled = mutableListOf<Int>()
+        var noteClicks = 0
+        composeTestRule.setContent {
+            FokusLauncherTheme {
+                HomeScreenContent(
+                        uiState = HomeUiState(),
+                        clockUiState = clock(),
+                        weatherUiState = weatherOff,
+                        noteUiState = HomeNoteUiState(showWidget = true, text = "milk\n- [ ] eggs"),
+                        favorites = testFavorites,
+                        rightSideShortcuts = testRightSideShortcuts,
+                        onLabelClick = {},
+                        onLabelLongPress = {},
+                        onIconClick = {},
+                        onNoteClick = { noteClicks++ },
+                        onToggleNoteTask = { toggled += it },
+                )
+            }
+        }
+
+        val note = composeTestRule.onNodeWithTag("note_widget")
+        note.performTouchInput { click(Offset(5f, height - 5f)) }
+        composeTestRule.runOnIdle {
+            assertEquals(listOf(1), toggled)
+            assertEquals(0, noteClicks)
+        }
+
+        note.performTouchInput { click(Offset(5f, 5f)) }
+        composeTestRule.runOnIdle {
+            assertEquals(listOf(1), toggled)
+            assertEquals(1, noteClicks)
+        }
+
+        note.performTouchInput { longClick(Offset(5f, height - 5f)) }
+        composeTestRule.runOnIdle {
+            assertEquals(listOf(1), toggled)
+            assertEquals(2, noteClicks)
+        }
     }
 
     @Test

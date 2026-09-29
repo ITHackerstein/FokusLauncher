@@ -42,6 +42,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
+import io.mockk.slot
 import io.mockk.unmockkObject
 import io.mockk.verify
 import kotlinx.coroutines.CoroutineScope
@@ -1179,6 +1180,20 @@ class HomeViewModelTest {
 
         coVerify { preferencesManager.setHomeNoteText("buy bread") }
         coVerify { preferencesManager.setHomeNoteText("x".repeat(HOME_NOTE_MAX_LENGTH)) }
+    }
+
+    @Test
+    fun `toggleHomeNoteTask flips the task through a single preferences transaction`() {
+        val transform = slot<(String) -> String>()
+        coEvery { preferencesManager.updateHomeNoteText(capture(transform)) } returns Unit
+        val viewModel = createViewModel()
+
+        viewModel.toggleHomeNoteTask(1)
+        testDispatcher.scheduler.runCurrent()
+
+        coVerify(exactly = 1) { preferencesManager.updateHomeNoteText(any()) }
+        coVerify(exactly = 0) { preferencesManager.setHomeNoteText(any()) }
+        assertEquals("milk\n- [x] eggs", transform.captured("milk\n- [ ] eggs"))
     }
 
     @Test

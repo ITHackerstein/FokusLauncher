@@ -102,6 +102,59 @@ class NoteMarkdownTest {
     }
 
     @Test
+    fun rendered_text_keeps_one_line_per_source_line() {
+        val source = "# Title\n- [ ] **a**\n\n\\- b\n  - c\n~~d~~"
+        val rendered = renderNoteMarkdown(source).text
+        assertEquals(source.split('\n').size, rendered.split('\n').size)
+    }
+
+    @Test
+    fun source_line_at_offset_counts_preceding_newlines() {
+        val rendered = renderNoteMarkdown("milk\n- [ ] eggs\nbread").text
+        assertEquals(0, noteSourceLineAt(rendered, 0))
+        assertEquals(0, noteSourceLineAt(rendered, 4))
+        assertEquals(1, noteSourceLineAt(rendered, 5))
+        assertEquals(1, noteSourceLineAt(rendered, rendered.indexOf("eggs")))
+        assertEquals(2, noteSourceLineAt(rendered, rendered.length))
+        assertEquals(2, noteSourceLineAt(rendered, rendered.length + 10))
+    }
+
+    @Test
+    fun task_lines_are_detected_by_source_index() {
+        val source = "# Today\n- [ ] milk\n- eggs\n  * [x] bread"
+        assertEquals(listOf(1, 3), noteTaskLines(source))
+        assertTrue(isNoteTaskLine(source, 1))
+        assertTrue(!isNoteTaskLine(source, 2))
+        assertTrue(!isNoteTaskLine(source, 9))
+    }
+
+    @Test
+    fun toggle_flips_only_the_target_task() {
+        val source = "# Today\n- [ ] milk\n  * [X] bread\n- eggs"
+        assertEquals("# Today\n- [x] milk\n  * [X] bread\n- eggs", toggleNoteTask(source, 1))
+        assertEquals("# Today\n- [ ] milk\n  * [ ] bread\n- eggs", toggleNoteTask(source, 2))
+    }
+
+    @Test
+    fun toggle_twice_restores_the_task() {
+        val source = "- [ ] milk"
+        assertEquals(source, toggleNoteTask(toggleNoteTask(source, 0), 0))
+    }
+
+    @Test
+    fun toggle_ignores_non_task_and_missing_lines() {
+        val source = "# Today\n- eggs"
+        assertEquals(source, toggleNoteTask(source, 0))
+        assertEquals(source, toggleNoteTask(source, 1))
+        assertEquals(source, toggleNoteTask(source, 5))
+    }
+
+    @Test
+    fun toggle_only_changes_the_checkbox_not_matching_body_text() {
+        assertEquals("- [x] fix [ ] parser", toggleNoteTask("- [ ] fix [ ] parser", 0))
+    }
+
+    @Test
     fun spans_never_set_a_color() {
         val rendered = renderNoteMarkdown("# H\n- [x] **b** *i* ~~s~~")
         assertTrue(rendered.spanStyles.isNotEmpty())

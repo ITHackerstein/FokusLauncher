@@ -17,10 +17,38 @@ import androidx.compose.ui.unit.em
  * - inline `**bold**`, `*italic*`, `~~strike~~`, and `\` escapes
  */
 fun renderNoteMarkdown(text: String): AnnotatedString = buildAnnotatedString {
-    text.lines().forEachIndexed { index, line ->
+    text.split('\n').forEachIndexed { index, line ->
         if (index > 0) append('\n')
         appendLine(line)
     }
+}
+
+/**
+ * Maps a character [offset] in text produced by [renderNoteMarkdown] back to its source line.
+ * Every source line renders to exactly one output line, so counting newlines is enough.
+ */
+fun noteSourceLineAt(renderedText: String, offset: Int): Int {
+    val end = offset.coerceIn(0, renderedText.length)
+    return (0 until end).count { renderedText[it] == '\n' }
+}
+
+fun isNoteTaskLine(source: String, lineIndex: Int): Boolean =
+        source.split('\n').getOrNull(lineIndex)?.let { taskRegex.matches(it) } == true
+
+/** Source line indices of every `- [ ]` / `- [x]` task in [source]. */
+fun noteTaskLines(source: String): List<Int> =
+        source.split('\n').mapIndexedNotNull { index, line ->
+            index.takeIf { taskRegex.matches(line) }
+        }
+
+/** Flips the checkbox on [lineIndex]; returns [source] unchanged if that line is not a task. */
+fun toggleNoteTask(source: String, lineIndex: Int): String {
+    val lines = source.split('\n').toMutableList()
+    val line = lines.getOrNull(lineIndex) ?: return source
+    val mark = taskRegex.matchEntire(line)?.groups?.get(2) ?: return source
+    val toggled = if (mark.value == " ") "x" else " "
+    lines[lineIndex] = line.replaceRange(mark.range, toggled)
+    return lines.joinToString("\n")
 }
 
 private val taskRegex = Regex("""^(\s*)[-*+] \[([ xX])] (.*)$""")

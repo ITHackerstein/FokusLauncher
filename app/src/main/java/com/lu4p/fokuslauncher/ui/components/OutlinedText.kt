@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -46,6 +47,9 @@ fun OutlinedText(
 /**
  * Styled variant. The outline pass reuses [text], so its spans must not set a color: a span color
  * would override [outlineColor] and the outline would disappear.
+ *
+ * [onTextLayout] reports the visible (front) text. With a photo backdrop that text is centered
+ * inside the padded pill, so callers mapping pointer positions must offset by the size difference.
  */
 @Composable
 fun OutlinedText(
@@ -58,6 +62,7 @@ fun OutlinedText(
         maxLines: Int = Int.MAX_VALUE,
         overflow: TextOverflow = TextOverflow.Clip,
         textAlign: TextAlign = TextAlign.Unspecified,
+        onTextLayout: (TextLayoutResult) -> Unit = {},
 ) {
     val outlineWidthDpSetting = LocalPhotoWallpaperOutlineWidthDp.current
     if (outlineWidthDpSetting > 0f) {
@@ -80,6 +85,7 @@ fun OutlinedText(
                     maxLines = maxLines,
                     overflow = overflow,
                     textAlign = textAlign,
+                    onTextLayout = onTextLayout,
             )
         }
         return
@@ -112,6 +118,7 @@ fun OutlinedText(
                 maxLines = maxLines,
                 overflow = overflow,
                     textAlign = textAlign,
+                onTextLayout = onTextLayout,
         )
     }
 }

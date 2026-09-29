@@ -70,6 +70,7 @@ import com.lu4p.fokuslauncher.utils.isDefaultHomeApp
 import com.lu4p.fokuslauncher.utils.openDefaultLauncherSettings
 import com.lu4p.fokuslauncher.ui.components.HOME_NOTE_MAX_LENGTH
 import com.lu4p.fokuslauncher.ui.components.clockDisplayTimeWithoutDayPeriod
+import com.lu4p.fokuslauncher.ui.components.toggleNoteTask
 import com.lu4p.fokuslauncher.ui.util.formatShortcutTargetDisplay
 import com.lu4p.fokuslauncher.ui.util.stateEagerlyIn
 import com.lu4p.fokuslauncher.ui.util.stateWhileSubscribedIn
@@ -1348,6 +1349,12 @@ class HomeViewModel @Inject constructor(
     fun saveHomeNote(text: String) {
         _showNoteEditor.value = false
         viewModelScope.launch { preferencesManager.setHomeNoteText(text.take(HOME_NOTE_MAX_LENGTH)) }
+    }
+
+    fun toggleHomeNoteTask(lineIndex: Int) {
+        viewModelScope.launch {
+            preferencesManager.updateHomeNoteText { toggleNoteTask(it, lineIndex) }
+        }
     }
 
     private fun observeHomeExtraWidgets() {
