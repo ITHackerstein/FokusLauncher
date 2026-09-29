@@ -601,7 +601,6 @@ private fun HomeWidgetsSection(
         if (extraChips.isNotEmpty()) {
             HomeExtraChipsRow(
                 chips = extraChips,
-                alignment = widgetAlignment,
                 outlined = outlined,
                 modifier = Modifier.fillMaxWidth().padding(top = extrasTopPad),
             )
