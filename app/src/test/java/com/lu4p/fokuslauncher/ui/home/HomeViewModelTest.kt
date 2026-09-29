@@ -49,6 +49,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import com.lu4p.fokuslauncher.data.iconpack.ArcticonsIconPackRepository
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -77,6 +78,7 @@ class HomeViewModelTest {
     private lateinit var context: Context
     private lateinit var appRepository: AppRepository
     private lateinit var preferencesManager: PreferencesManager
+    private lateinit var arcticonsIconPackRepository: ArcticonsIconPackRepository
     private lateinit var weatherRepository: WeatherRepository
     private lateinit var mediaRepository: MediaRepository
     private lateinit var screenTimeRepository: ScreenTimeRepository
@@ -125,6 +127,10 @@ class HomeViewModelTest {
 
         // Mock preferences using Fake
         preferencesManager = mockk(relaxed = true)
+        arcticonsIconPackRepository = mockk(relaxed = true)
+        every { arcticonsIconPackRepository.installedPackage } returns MutableStateFlow(null)
+        every { preferencesManager.homeAppIconModeFlow } returns flowOf("TEXT")
+        every { preferencesManager.useArcticonsDrawerIconsFlow } returns flowOf(false)
         every { preferencesManager.favoritesFlow } returns flowOf(testFavorites)
         every { preferencesManager.swipeLeftTargetFlow } returns flowOf(null)
         every { preferencesManager.swipeRightTargetFlow } returns flowOf(null)
@@ -193,10 +199,41 @@ class HomeViewModelTest {
         Dispatchers.resetMain()
     }
 
+    @Test
+    fun homeArcticonsRequireGlobalToggleAndInstalledPack() {
+        val enabled = MutableStateFlow(false)
+        val installed = MutableStateFlow<String?>("com.donnnno.arcticons")
+        every { preferencesManager.useArcticonsDrawerIconsFlow } returns enabled
+        every { preferencesManager.homeAppIconModeFlow } returns flowOf("ICON_ONLY")
+        every { arcticonsIconPackRepository.installedPackage } returns installed
+
+        val viewModel = createViewModel()
+        testDispatcher.scheduler.runCurrent()
+        assertEquals(HomeAppIconMode.TEXT, viewModel.uiState.value.homeAppIconMode)
+
+        enabled.value = true
+        testDispatcher.scheduler.runCurrent()
+        assertEquals(HomeAppIconMode.ICON_ONLY, viewModel.uiState.value.homeAppIconMode)
+
+        enabled.value = false
+        testDispatcher.scheduler.runCurrent()
+        assertEquals(HomeAppIconMode.TEXT, viewModel.uiState.value.homeAppIconMode)
+
+        installed.value = null
+        enabled.value = true
+        testDispatcher.scheduler.runCurrent()
+        assertEquals(HomeAppIconMode.TEXT, viewModel.uiState.value.homeAppIconMode)
+
+        installed.value = "com.donnnno.arcticons"
+        testDispatcher.scheduler.runCurrent()
+        assertEquals(HomeAppIconMode.ICON_ONLY, viewModel.uiState.value.homeAppIconMode)
+    }
+
     private fun createViewModel() = HomeViewModel(
         context,
         appRepository,
         preferencesManager,
+        arcticonsIconPackRepository,
         weatherRepository,
         mediaRepository,
         screenTimeRepository,
@@ -208,6 +245,7 @@ class HomeViewModelTest {
         withContext,
         appRepository,
         preferencesManager,
+        arcticonsIconPackRepository,
         weatherRepository,
         mediaRepository,
         screenTimeRepository,
