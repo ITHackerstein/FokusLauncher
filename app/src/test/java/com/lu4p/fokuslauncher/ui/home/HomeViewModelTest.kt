@@ -25,7 +25,6 @@ import com.lu4p.fokuslauncher.data.model.HomeShortcut
 import com.lu4p.fokuslauncher.data.model.HOST_APP_METADATA_SENTINEL
 import com.lu4p.fokuslauncher.data.model.ShortcutTarget
 import com.lu4p.fokuslauncher.data.model.WidgetTapTarget
-import com.lu4p.fokuslauncher.ui.components.HOME_NOTE_MAX_LENGTH
 import com.lu4p.fokuslauncher.data.model.appMetadataKey
 import com.lu4p.fokuslauncher.data.model.favoriteAppStableKey
 import com.lu4p.fokuslauncher.data.repository.AppRepository
@@ -1170,16 +1169,16 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `saveHomeNote persists text capped at max length`() {
+    fun `saveHomeNote persists the entire text`() {
         coEvery { preferencesManager.setHomeNoteText(any()) } returns Unit
         val viewModel = createViewModel()
 
         viewModel.saveHomeNote("buy bread")
-        viewModel.saveHomeNote("x".repeat(HOME_NOTE_MAX_LENGTH + 50))
+        viewModel.saveHomeNote("x".repeat(100_000))
         testDispatcher.scheduler.runCurrent()
 
         coVerify { preferencesManager.setHomeNoteText("buy bread") }
-        coVerify { preferencesManager.setHomeNoteText("x".repeat(HOME_NOTE_MAX_LENGTH)) }
+        coVerify { preferencesManager.setHomeNoteText("x".repeat(100_000)) }
     }
 
     @Test
@@ -1218,4 +1217,36 @@ class HomeViewModelTest {
 
         assertFalse(viewModel.showNoteEditor.value)
     }
+    @Test
+    fun `leaving the editor saves changes and reopening shows them`() {
+        coEvery { preferencesManager.setHomeNoteText(any()) } returns Unit
+        every { preferencesManager.homeNoteTextFlow } returns flowOf("saved note")
+        val viewModel = createViewModel()
+        testDispatcher.scheduler.runCurrent()
+        viewModel.openNoteEditor()
+        assertEquals("saved note", viewModel.noteDraft.value)
+
+        viewModel.updateNoteDraft("unfinished edit")
+        viewModel.dismissHomeOverlays()
+        testDispatcher.scheduler.runCurrent()
+        assertNull(viewModel.noteDraft.value)
+        assertFalse(viewModel.showNoteEditor.value)
+        coVerify(exactly = 1) { preferencesManager.setHomeNoteText("unfinished edit") }
+        viewModel.openNoteEditor()
+        assertEquals("unfinished edit", viewModel.noteDraft.value)
+        assertEquals("unfinished edit", viewModel.noteUiState.value.text)
+    }
+
+    @Test
+    fun `saving clears the recovered draft`() {
+        coEvery { preferencesManager.setHomeNoteText(any()) } returns Unit
+        val viewModel = createViewModel()
+        viewModel.openNoteEditor()
+        viewModel.updateNoteDraft("new note")
+        viewModel.saveHomeNote("new note")
+
+        assertNull(viewModel.noteDraft.value)
+        assertFalse(viewModel.showNoteEditor.value)
+    }
+
 }

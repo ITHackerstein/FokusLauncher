@@ -363,7 +363,7 @@
     <string name="home_note_edit_action">Modifica nota</string>
     <string name="home_note_add_task">Aggiungi attività</string>
     <string name="home_note_toggle_task">Cambia stato: %1$s</string>
-    <string name="home_note_placeholder">Tocca per aggiungere una nota</string>
+    <string name="home_note_placeholder">Tieni premuto per aggiungere una nota</string>
     <string name="home_note_edit_title">Nota</string>
     <string name="home_note_edit_hint">Un elemento per linea...</string>
     <string name="media_buffering">Caricamento</string>

@@ -16,9 +16,14 @@ class HomeNoteEditDialogTest {
     @get:Rule val composeTestRule = createComposeRule()
 
     private fun showDialog(initialText: String, onSave: (String) -> Unit) {
+        var draft = initialText
         composeTestRule.setContent {
             FokusLauncherTheme {
-                HomeNoteEditDialog(initialText = initialText, onDismiss = {}, onSave = onSave)
+                HomeNoteEditor(
+                        initialText = initialText,
+                        onDraftChange = { draft = it },
+                        onDismiss = { onSave(draft) },
+                )
             }
         }
     }
@@ -32,7 +37,7 @@ class HomeNoteEditDialogTest {
         composeTestRule.onNodeWithTag("note_edit_field").performTextInput("eggs")
         composeTestRule.onNodeWithTag("note_add_task").performClick()
         composeTestRule.onNodeWithTag("note_edit_field").performTextInput("bread")
-        composeTestRule.onNodeWithTag("note_edit_save").performClick()
+        composeTestRule.onNodeWithTag("note_edit_back").performClick()
 
         assertEquals("milk\n- [ ] eggs\n- [ ] bread", saved)
     }
@@ -44,8 +49,16 @@ class HomeNoteEditDialogTest {
 
         composeTestRule.onNodeWithTag("note_add_task").performClick()
         composeTestRule.onNodeWithTag("note_edit_field").performTextInput("call mum")
-        composeTestRule.onNodeWithTag("note_edit_save").performClick()
+        composeTestRule.onNodeWithTag("note_edit_back").performClick()
 
         assertEquals("- [ ] call mum", saved)
+    }
+    @Test
+    fun leavingSavesTheEditedNote() {
+        var saved: String? = null
+        showDialog("milk") { saved = it }
+        composeTestRule.onNodeWithTag("note_edit_field").performTextInput(" and eggs")
+        composeTestRule.onNodeWithTag("note_edit_back").performClick()
+        assertEquals("milk and eggs", saved)
     }
 }

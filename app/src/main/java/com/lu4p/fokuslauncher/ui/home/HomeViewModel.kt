@@ -68,7 +68,6 @@ import com.lu4p.fokuslauncher.utils.registerBroadcastReceiverNotExported
 import com.lu4p.fokuslauncher.utils.registerStickyBroadcastReceiverNotExported
 import com.lu4p.fokuslauncher.utils.isDefaultHomeApp
 import com.lu4p.fokuslauncher.utils.openDefaultLauncherSettings
-import com.lu4p.fokuslauncher.ui.components.HOME_NOTE_MAX_LENGTH
 import com.lu4p.fokuslauncher.ui.components.clockDisplayTimeWithoutDayPeriod
 import com.lu4p.fokuslauncher.ui.components.toggleNoteTask
 import com.lu4p.fokuslauncher.ui.util.formatShortcutTargetDisplay
@@ -224,6 +223,9 @@ class HomeViewModel @Inject constructor(
 
     private val _noteUiState = MutableStateFlow(HomeNoteUiState())
     val noteUiState: StateFlow<HomeNoteUiState> = _noteUiState.asStateFlow()
+
+    private val _noteDraft = MutableStateFlow<String?>(null)
+    val noteDraft: StateFlow<String?> = _noteDraft.asStateFlow()
 
     private val _showNoteEditor = MutableStateFlow(false)
     val showNoteEditor: StateFlow<Boolean> = _showNoteEditor.asStateFlow()
@@ -1338,17 +1340,31 @@ class HomeViewModel @Inject constructor(
         ) { _noteUiState.value = it }
     }
 
+    fun updateNoteDraft(text: String) {
+        _noteDraft.value = text
+    }
+
     fun openNoteEditor() {
+        if (_noteDraft.value == null) _noteDraft.value = _noteUiState.value.text
         _showNoteEditor.value = true
     }
 
     fun dismissNoteEditor() {
-        _showNoteEditor.value = false
+        val draft = _noteDraft.value
+        if (draft != null && draft != _noteUiState.value.text) {
+            saveHomeNote(draft)
+        } else {
+            _noteDraft.value = null
+            _showNoteEditor.value = false
+        }
     }
 
     fun saveHomeNote(text: String) {
+        val savedText = text
+        _noteUiState.value = _noteUiState.value.copy(text = savedText)
+        _noteDraft.value = null
         _showNoteEditor.value = false
-        viewModelScope.launch { preferencesManager.setHomeNoteText(text.take(HOME_NOTE_MAX_LENGTH)) }
+        viewModelScope.launch { preferencesManager.setHomeNoteText(savedText) }
     }
 
     fun toggleHomeNoteTask(lineIndex: Int) {

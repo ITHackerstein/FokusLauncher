@@ -280,7 +280,7 @@
     <string name="home_note_edit_action">Edit note</string>
     <string name="home_note_add_task">Add task</string>
     <string name="home_note_toggle_task">Toggle %1$s</string>
-    <string name="home_note_placeholder">Tap to add a note</string>
+    <string name="home_note_placeholder">Long press to add a note</string>
     <string name="home_note_edit_title">Note</string>
     <string name="home_note_edit_hint">One item per line...</string>
     <string name="settings_show_home_world_clock_subtitle">Cities under the date</string>

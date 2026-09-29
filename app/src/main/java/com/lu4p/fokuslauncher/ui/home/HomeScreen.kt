@@ -41,6 +41,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -69,7 +70,7 @@ import com.lu4p.fokuslauncher.ui.components.ClockWidget
 import com.lu4p.fokuslauncher.ui.components.DateBatteryRow
 import com.lu4p.fokuslauncher.ui.components.FokusBottomSheet
 import com.lu4p.fokuslauncher.ui.components.MediaWidget
-import com.lu4p.fokuslauncher.ui.components.HomeNoteEditDialog
+import com.lu4p.fokuslauncher.ui.components.HomeNoteEditor
 import com.lu4p.fokuslauncher.ui.components.NoteWidget
 import com.lu4p.fokuslauncher.ui.components.PomodoroWidget
 import com.lu4p.fokuslauncher.pomodoro.PomodoroUiState
@@ -105,6 +106,7 @@ fun HomeScreen(
     val pomodoroUiState by viewModel.pomodoroUiState.collectAsStateWithLifecycle()
     val screenTimeUiState by viewModel.screenTimeUiState.collectAsStateWithLifecycle()
     val noteUiState by viewModel.noteUiState.collectAsStateWithLifecycle()
+    val noteDraft by viewModel.noteDraft.collectAsStateWithLifecycle()
     val showNoteEditor by viewModel.showNoteEditor.collectAsStateWithLifecycle()
     val worldClockUiState by viewModel.worldClockUiState.collectAsStateWithLifecycle()
     val countdownUiState by viewModel.countdownUiState.collectAsStateWithLifecycle()
@@ -235,10 +237,11 @@ fun HomeScreen(
     }
 
     if (showNoteEditor && noteUiState.showWidget) {
-        HomeNoteEditDialog(
+        HomeNoteEditor(
             initialText = noteUiState.text,
+            draftText = noteDraft ?: noteUiState.text,
+            onDraftChange = viewModel::updateNoteDraft,
             onDismiss = viewModel::dismissNoteEditor,
-            onSave = viewModel::saveHomeNote,
         )
     }
 
@@ -321,7 +324,7 @@ fun HomeScreenContent(
             .testTag("home_screen")
     ) {
         CompositionLocalProvider(LocalPhotoWallpaperOutlineWidthDp provides outlineWidthDp) {
-            Column(
+            HomeContentLayout(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 32.dp)
@@ -360,24 +363,26 @@ fun HomeScreenContent(
                     outlined = uiState.usesPhotoWallpaper,
                 )
 
-                Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.layoutId(HomeContentSlot.Gap))
 
-                HomeFavoritesSection(
-                    homeAlignment = uiState.homeAlignment,
-                    favorites = favorites,
-                    installedApps = installedApps,
-                    rightSideShortcuts = rightSideShortcuts,
-                    profileDisplayNameOverrides = profileDisplayNameOverrides,
-                    launcherFontScale = uiState.launcherFontScale,
-                    outlined = uiState.usesPhotoWallpaper,
-                    notificationIndicatorUiState = notificationIndicatorUiState,
-                    onLabelClick = onLabelClick,
-                    onLabelLongPress = onLabelLongPress,
-                    onIconClick = onIconClick
-                )
+                Box(modifier = Modifier.fillMaxWidth().layoutId(HomeContentSlot.Favorites)) {
+                    HomeFavoritesSection(
+                        homeAlignment = uiState.homeAlignment,
+                        favorites = favorites,
+                        installedApps = installedApps,
+                        rightSideShortcuts = rightSideShortcuts,
+                        profileDisplayNameOverrides = profileDisplayNameOverrides,
+                        launcherFontScale = uiState.launcherFontScale,
+                        outlined = uiState.usesPhotoWallpaper,
+                        notificationIndicatorUiState = notificationIndicatorUiState,
+                        onLabelClick = onLabelClick,
+                        onLabelLongPress = onLabelLongPress,
+                        onIconClick = onIconClick
+                    )
+                }
 
                 if (uiState.homeAlignment == HomeAlignment.MIDDLE) {
-                    Spacer(modifier = Modifier.weight(1f))
+                    Spacer(modifier = Modifier.layoutId(HomeContentSlot.Gap))
                 } else {
                     Spacer(modifier = Modifier.height(4.dp))
                 }
@@ -643,7 +648,8 @@ private fun HomeWidgetsSection(
                 outlined = outlined,
                 onClick = onNoteClick,
                 onToggleTask = onToggleNoteTask,
-                modifier = Modifier.fillMaxWidth().padding(top = noteTopPad),
+                modifier = Modifier.fillMaxWidth().layoutId(HomeContentSlot.Note)
+                    .padding(top = noteTopPad),
             )
             mediaOrPomodoroTopPad
         } else {
