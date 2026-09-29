@@ -25,6 +25,7 @@ import com.lu4p.fokuslauncher.data.model.HomeShortcut
 import com.lu4p.fokuslauncher.data.model.HOST_APP_METADATA_SENTINEL
 import com.lu4p.fokuslauncher.data.model.ShortcutTarget
 import com.lu4p.fokuslauncher.data.model.WidgetTapTarget
+import com.lu4p.fokuslauncher.ui.components.HOME_NOTE_MAX_LENGTH
 import com.lu4p.fokuslauncher.data.model.appMetadataKey
 import com.lu4p.fokuslauncher.data.model.favoriteAppStableKey
 import com.lu4p.fokuslauncher.data.repository.AppRepository
@@ -161,6 +162,8 @@ class HomeViewModelTest {
                         ),
                 )
         every { preferencesManager.showHomeScreenTimeFlow } returns flowOf(false)
+        every { preferencesManager.showHomeNoteFlow } returns flowOf(false)
+        every { preferencesManager.homeNoteTextFlow } returns flowOf("")
         every { preferencesManager.homeExtraWidgetsFlow } returns flowOf(emptyList())
         every { preferencesManager.worldClockCitiesFlow } returns flowOf(emptyList())
         every { preferencesManager.countdownEventsFlow } returns flowOf(emptyList())
@@ -1142,5 +1145,62 @@ class HomeViewModelTest {
         viewModel.dismissHomeOverlays()
 
         assertNull(viewModel.appMenuTarget.value)
+    }
+
+    @Test
+    fun `note widget is hidden by default`() {
+        val viewModel = createViewModel()
+        testDispatcher.scheduler.runCurrent()
+
+        assertFalse(viewModel.noteUiState.value.showWidget)
+    }
+
+    @Test
+    fun `note widget exposes stored text when enabled`() {
+        every { preferencesManager.showHomeNoteFlow } returns flowOf(true)
+        every { preferencesManager.homeNoteTextFlow } returns flowOf("milk\neggs")
+
+        val viewModel = createViewModel()
+        testDispatcher.scheduler.runCurrent()
+
+        val state = viewModel.noteUiState.value
+        assertTrue(state.showWidget)
+        assertEquals("milk\neggs", state.text)
+    }
+
+    @Test
+    fun `saveHomeNote persists text capped at max length`() {
+        coEvery { preferencesManager.setHomeNoteText(any()) } returns Unit
+        val viewModel = createViewModel()
+
+        viewModel.saveHomeNote("buy bread")
+        viewModel.saveHomeNote("x".repeat(HOME_NOTE_MAX_LENGTH + 50))
+        testDispatcher.scheduler.runCurrent()
+
+        coVerify { preferencesManager.setHomeNoteText("buy bread") }
+        coVerify { preferencesManager.setHomeNoteText("x".repeat(HOME_NOTE_MAX_LENGTH)) }
+    }
+
+    @Test
+    fun `saveHomeNote closes the note editor`() {
+        coEvery { preferencesManager.setHomeNoteText(any()) } returns Unit
+        val viewModel = createViewModel()
+        viewModel.openNoteEditor()
+        assertTrue(viewModel.showNoteEditor.value)
+
+        viewModel.saveHomeNote("done")
+
+        assertFalse(viewModel.showNoteEditor.value)
+    }
+
+    @Test
+    fun `dismissHomeOverlays closes note editor`() {
+        val viewModel = createViewModel()
+        viewModel.openNoteEditor()
+        assertTrue(viewModel.showNoteEditor.value)
+
+        viewModel.dismissHomeOverlays()
+
+        assertFalse(viewModel.showNoteEditor.value)
     }
 }

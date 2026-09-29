@@ -391,6 +391,100 @@ class HomeScreenTest {
     }
 
     @Test
+    fun homeScreen_noteWidget_showsTextAndOpensEditorOnTap() {
+        var noteClicks = 0
+        composeTestRule.setContent {
+            FokusLauncherTheme {
+                HomeScreenContent(
+                        uiState = HomeUiState(),
+                        clockUiState = clock(),
+                        weatherUiState = weatherOff,
+                        noteUiState = HomeNoteUiState(showWidget = true, text = "milk\neggs"),
+                        favorites = testFavorites,
+                        rightSideShortcuts = testRightSideShortcuts,
+                        onLabelClick = {},
+                        onLabelLongPress = {},
+                        onIconClick = {},
+                        onNoteClick = { noteClicks++ },
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("milk\neggs").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("note_widget").assertIsDisplayed().performClick()
+        assertEquals(1, noteClicks)
+    }
+
+    @Test
+    fun homeScreen_noteWidget_rendersMarkdown() {
+        composeTestRule.setContent {
+            FokusLauncherTheme {
+                HomeScreenContent(
+                        uiState = HomeUiState(),
+                        clockUiState = clock(),
+                        weatherUiState = weatherOff,
+                        noteUiState =
+                                HomeNoteUiState(
+                                        showWidget = true,
+                                        text = "# Today\n- [ ] **milk**\n- [x] eggs\n- bread",
+                                ),
+                        favorites = testFavorites,
+                        rightSideShortcuts = testRightSideShortcuts,
+                        onLabelClick = {},
+                        onLabelLongPress = {},
+                        onIconClick = {},
+                )
+            }
+        }
+
+        composeTestRule
+                .onNodeWithText("Today\n☐ milk\n☑ eggs\n• bread")
+                .assertIsDisplayed()
+    }
+
+    @Test
+    fun homeScreen_noteWidget_showsPlaceholderWhenEmpty() {
+        composeTestRule.setContent {
+            FokusLauncherTheme {
+                HomeScreenContent(
+                        uiState = HomeUiState(),
+                        clockUiState = clock(),
+                        weatherUiState = weatherOff,
+                        noteUiState = HomeNoteUiState(showWidget = true, text = ""),
+                        favorites = testFavorites,
+                        rightSideShortcuts = testRightSideShortcuts,
+                        onLabelClick = {},
+                        onLabelLongPress = {},
+                        onIconClick = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("Tap to add a note").assertIsDisplayed()
+    }
+
+    @Test
+    fun homeScreen_noteWidget_hiddenWhenDisabled() {
+        composeTestRule.setContent {
+            FokusLauncherTheme {
+                HomeScreenContent(
+                        uiState = HomeUiState(),
+                        clockUiState = clock(),
+                        weatherUiState = weatherOff,
+                        noteUiState = HomeNoteUiState(showWidget = false, text = "milk"),
+                        favorites = testFavorites,
+                        rightSideShortcuts = testRightSideShortcuts,
+                        onLabelClick = {},
+                        onLabelLongPress = {},
+                        onIconClick = {},
+                )
+            }
+        }
+
+        composeTestRule.onAllNodesWithTag("note_widget").assertCountEquals(0)
+    }
+
+    @Test
     fun homeScreen_hidesAllHomeInfo_whenAllItemTogglesOff() {
         composeTestRule.setContent {
             FokusLauncherTheme {

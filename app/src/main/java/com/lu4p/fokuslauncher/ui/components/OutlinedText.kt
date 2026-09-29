@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -20,6 +21,35 @@ import com.lu4p.fokuslauncher.ui.theme.LocalPhotoWallpaperOutlineWidthDp
 @Composable
 fun OutlinedText(
         text: String,
+        style: TextStyle,
+        color: Color = LocalContentColor.current,
+        modifier: Modifier = Modifier,
+        outlineColor: Color = Color.Black,
+        outlineWidth: Float = 2f,
+        maxLines: Int = Int.MAX_VALUE,
+        overflow: TextOverflow = TextOverflow.Clip,
+        textAlign: TextAlign = TextAlign.Unspecified,
+) {
+    OutlinedText(
+            text = AnnotatedString(text),
+            style = style,
+            color = color,
+            modifier = modifier,
+            outlineColor = outlineColor,
+            outlineWidth = outlineWidth,
+            maxLines = maxLines,
+            overflow = overflow,
+            textAlign = textAlign,
+    )
+}
+
+/**
+ * Styled variant. The outline pass reuses [text], so its spans must not set a color: a span color
+ * would override [outlineColor] and the outline would disappear.
+ */
+@Composable
+fun OutlinedText(
+        text: AnnotatedString,
         style: TextStyle,
         color: Color = LocalContentColor.current,
         modifier: Modifier = Modifier,

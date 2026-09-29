@@ -68,6 +68,7 @@ import com.lu4p.fokuslauncher.utils.registerBroadcastReceiverNotExported
 import com.lu4p.fokuslauncher.utils.registerStickyBroadcastReceiverNotExported
 import com.lu4p.fokuslauncher.utils.isDefaultHomeApp
 import com.lu4p.fokuslauncher.utils.openDefaultLauncherSettings
+import com.lu4p.fokuslauncher.ui.components.HOME_NOTE_MAX_LENGTH
 import com.lu4p.fokuslauncher.ui.components.clockDisplayTimeWithoutDayPeriod
 import com.lu4p.fokuslauncher.ui.util.formatShortcutTargetDisplay
 import com.lu4p.fokuslauncher.ui.util.stateEagerlyIn
@@ -161,6 +162,12 @@ data class HomeScreenTimeUiState(
         get() = enabled && durationText != null
 }
 
+data class HomeNoteUiState(
+    /** User preference; the note is opt-in and off by default. */
+    val showWidget: Boolean = false,
+    val text: String = "",
+)
+
 data class HomeWorldClockUiState(
         val citiesById: Map<String, WorldClockCityUi> = emptyMap(),
 )
@@ -213,6 +220,12 @@ class HomeViewModel @Inject constructor(
 
     private val _screenTimeUiState = MutableStateFlow(HomeScreenTimeUiState())
     val screenTimeUiState: StateFlow<HomeScreenTimeUiState> = _screenTimeUiState.asStateFlow()
+
+    private val _noteUiState = MutableStateFlow(HomeNoteUiState())
+    val noteUiState: StateFlow<HomeNoteUiState> = _noteUiState.asStateFlow()
+
+    private val _showNoteEditor = MutableStateFlow(false)
+    val showNoteEditor: StateFlow<Boolean> = _showNoteEditor.asStateFlow()
 
     private val _worldClockUiState = MutableStateFlow(HomeWorldClockUiState())
     val worldClockUiState: StateFlow<HomeWorldClockUiState> = _worldClockUiState.asStateFlow()
@@ -405,6 +418,7 @@ class HomeViewModel @Inject constructor(
         pomodoroRepository.start()
         observeNotificationIndicators()
         observeScreenTime()
+        observeNote()
         observeHomeExtraWidgets()
         observeWorldClock()
         observeCountdown()
@@ -626,6 +640,7 @@ class HomeViewModel @Inject constructor(
     fun dismissHomeOverlays() {
         dismissHomeScreenMenu()
         dismissAppMenu()
+        dismissNoteEditor()
     }
 
     // ── Edit flows ──────────────────────────────────────────────────
@@ -1309,6 +1324,30 @@ class HomeViewModel @Inject constructor(
     private fun stopScreenTimeTicker() {
         screenTimeTickerJob?.cancel()
         screenTimeTickerJob = null
+    }
+
+    // ── Note widget ─────────────────────────────────────────────────
+
+    private fun observeNote() {
+        observeFlow(
+            combine(
+                preferencesManager.showHomeNoteFlow,
+                preferencesManager.homeNoteTextFlow,
+            ) { show, text -> HomeNoteUiState(showWidget = show, text = text) }
+        ) { _noteUiState.value = it }
+    }
+
+    fun openNoteEditor() {
+        _showNoteEditor.value = true
+    }
+
+    fun dismissNoteEditor() {
+        _showNoteEditor.value = false
+    }
+
+    fun saveHomeNote(text: String) {
+        _showNoteEditor.value = false
+        viewModelScope.launch { preferencesManager.setHomeNoteText(text.take(HOME_NOTE_MAX_LENGTH)) }
     }
 
     private fun observeHomeExtraWidgets() {

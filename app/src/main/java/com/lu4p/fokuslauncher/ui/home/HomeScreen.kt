@@ -69,6 +69,8 @@ import com.lu4p.fokuslauncher.ui.components.ClockWidget
 import com.lu4p.fokuslauncher.ui.components.DateBatteryRow
 import com.lu4p.fokuslauncher.ui.components.FokusBottomSheet
 import com.lu4p.fokuslauncher.ui.components.MediaWidget
+import com.lu4p.fokuslauncher.ui.components.HomeNoteEditDialog
+import com.lu4p.fokuslauncher.ui.components.NoteWidget
 import com.lu4p.fokuslauncher.ui.components.PomodoroWidget
 import com.lu4p.fokuslauncher.pomodoro.PomodoroUiState
 import com.lu4p.fokuslauncher.data.model.PomodoroMode
@@ -102,6 +104,8 @@ fun HomeScreen(
     val mediaUiState by viewModel.mediaUiState.collectAsStateWithLifecycle()
     val pomodoroUiState by viewModel.pomodoroUiState.collectAsStateWithLifecycle()
     val screenTimeUiState by viewModel.screenTimeUiState.collectAsStateWithLifecycle()
+    val noteUiState by viewModel.noteUiState.collectAsStateWithLifecycle()
+    val showNoteEditor by viewModel.showNoteEditor.collectAsStateWithLifecycle()
     val worldClockUiState by viewModel.worldClockUiState.collectAsStateWithLifecycle()
     val countdownUiState by viewModel.countdownUiState.collectAsStateWithLifecycle()
     val homeExtraWidgets by viewModel.homeExtraWidgets.collectAsStateWithLifecycle()
@@ -152,6 +156,7 @@ fun HomeScreen(
             mediaUiState = mediaUiState,
             pomodoroUiState = pomodoroUiState,
             screenTimeUiState = screenTimeUiState,
+            noteUiState = noteUiState,
             worldClockUiState = worldClockUiState,
             countdownUiState = countdownUiState,
             homeExtraWidgets = homeExtraWidgets,
@@ -169,6 +174,7 @@ fun HomeScreen(
             onDateClick = onDateClick,
             onWeatherClick = onWeatherClick,
             onScreenTimeClick = onScreenTimeClick,
+            onNoteClick = viewModel::openNoteEditor,
             onMediaOpenApp = viewModel::mediaOpenApp,
             onMediaPrevious = viewModel::mediaSkipToPrevious,
             onMediaPlayPause = viewModel::mediaPlayPause,
@@ -227,6 +233,14 @@ fun HomeScreen(
         )
     }
 
+    if (showNoteEditor && noteUiState.showWidget) {
+        HomeNoteEditDialog(
+            initialText = noteUiState.text,
+            onDismiss = viewModel::dismissNoteEditor,
+            onSave = viewModel::saveHomeNote,
+        )
+    }
+
     if (showWeatherAppPicker) {
         ShortcutActionPickerDialog(
             allActions = allShortcutActions,
@@ -254,6 +268,7 @@ fun HomeScreenContent(
     mediaUiState: HomeMediaUiState = HomeMediaUiState(),
     pomodoroUiState: PomodoroUiState = PomodoroUiState(),
     screenTimeUiState: HomeScreenTimeUiState = HomeScreenTimeUiState(),
+    noteUiState: HomeNoteUiState = HomeNoteUiState(),
     worldClockUiState: HomeWorldClockUiState = HomeWorldClockUiState(),
     countdownUiState: HomeCountdownUiState = HomeCountdownUiState(),
     homeExtraWidgets: List<HomeExtraWidgetEntry> = emptyList(),
@@ -267,6 +282,7 @@ fun HomeScreenContent(
     onDateClick: () -> Unit = {},
     onWeatherClick: () -> Unit = {},
     onScreenTimeClick: () -> Unit = {},
+    onNoteClick: () -> Unit = {},
     onMediaOpenApp: () -> Unit = {},
     onMediaPrevious: () -> Unit = {},
     onMediaPlayPause: () -> Unit = {},
@@ -319,6 +335,7 @@ fun HomeScreenContent(
                     mediaUiState = mediaUiState,
                     pomodoroUiState = pomodoroUiState,
                     screenTimeUiState = screenTimeUiState,
+                    noteUiState = noteUiState,
                     worldClockUiState = worldClockUiState,
                     countdownUiState = countdownUiState,
                     homeExtraWidgets = homeExtraWidgets,
@@ -326,6 +343,7 @@ fun HomeScreenContent(
                     onDateClick = onDateClick,
                     onWeatherClick = onWeatherClick,
                     onScreenTimeClick = onScreenTimeClick,
+                    onNoteClick = onNoteClick,
                     onMediaOpenApp = onMediaOpenApp,
                     onMediaPrevious = onMediaPrevious,
                     onMediaPlayPause = onMediaPlayPause,
@@ -483,6 +501,7 @@ private fun HomeWidgetsSection(
     mediaUiState: HomeMediaUiState,
     pomodoroUiState: PomodoroUiState,
     screenTimeUiState: HomeScreenTimeUiState,
+    noteUiState: HomeNoteUiState,
     worldClockUiState: HomeWorldClockUiState,
     countdownUiState: HomeCountdownUiState,
     homeExtraWidgets: List<HomeExtraWidgetEntry>,
@@ -490,6 +509,7 @@ private fun HomeWidgetsSection(
     onDateClick: () -> Unit,
     onWeatherClick: () -> Unit,
     onScreenTimeClick: () -> Unit,
+    onNoteClick: () -> Unit,
     onMediaOpenApp: () -> Unit,
     onMediaPrevious: () -> Unit,
     onMediaPlayPause: () -> Unit,
@@ -597,7 +617,7 @@ private fun HomeWidgetsSection(
             }
         }
     val mediaOrPomodoroTopPad = 16.dp
-    val nextTopPad =
+    val noteTopPad =
         if (extraChips.isNotEmpty()) {
             HomeExtraChipsRow(
                 chips = extraChips,
@@ -609,6 +629,20 @@ private fun HomeWidgetsSection(
             mediaOrPomodoroTopPad
         } else {
             0.dp
+        }
+
+    val nextTopPad =
+        if (noteUiState.showWidget) {
+            NoteWidget(
+                text = noteUiState.text,
+                alignment = widgetAlignment,
+                outlined = outlined,
+                onClick = onNoteClick,
+                modifier = Modifier.fillMaxWidth().padding(top = noteTopPad),
+            )
+            mediaOrPomodoroTopPad
+        } else {
+            noteTopPad
         }
 
     when {
