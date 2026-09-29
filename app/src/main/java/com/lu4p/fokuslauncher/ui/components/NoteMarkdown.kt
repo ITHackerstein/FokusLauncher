@@ -51,6 +51,24 @@ fun toggleNoteTask(source: String, lineIndex: Int): String {
     return lines.joinToString("\n")
 }
 
+const val NOTE_TASK_PREFIX = "- [ ] "
+
+/**
+ * Starts a new unchecked task at [cursor]: fills the cursor's line if it is blank, otherwise adds a
+ * line after it. Returns the new text and the cursor position just after the prefix.
+ */
+fun insertNoteTaskLine(text: String, cursor: Int): Pair<String, Int> {
+    val at = cursor.coerceIn(0, text.length)
+    val lineStart = text.lastIndexOf('\n', at - 1) + 1
+    val lineEnd = text.indexOf('\n', at).let { if (it == -1) text.length else it }
+    return if (text.substring(lineStart, lineEnd).isBlank()) {
+        text.replaceRange(lineStart, lineEnd, NOTE_TASK_PREFIX) to lineStart + NOTE_TASK_PREFIX.length
+    } else {
+        text.replaceRange(lineEnd, lineEnd, "\n" + NOTE_TASK_PREFIX) to
+                lineEnd + 1 + NOTE_TASK_PREFIX.length
+    }
+}
+
 private val taskRegex = Regex("""^(\s*)[-*+] \[([ xX])] (.*)$""")
 private val bulletRegex = Regex("""^(\s*)[-*+] (.*)$""")
 private val headingRegex = Regex("""^(#{1,6}) +(.*)$""")

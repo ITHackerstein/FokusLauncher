@@ -361,6 +361,7 @@
     <string name="settings_show_home_note">Mostra nota</string>
     <string name="settings_show_home_note_subtitle">Una breve nota nella schermata home: tocca un\'attività per spuntarla, tocca altrove o tieni premuto per modificarla</string>
     <string name="home_note_edit_action">Modifica nota</string>
+    <string name="home_note_add_task">Aggiungi attività</string>
     <string name="home_note_toggle_task">Cambia stato: %1$s</string>
     <string name="home_note_placeholder">Tocca per aggiungere una nota</string>
     <string name="home_note_edit_title">Nota</string>

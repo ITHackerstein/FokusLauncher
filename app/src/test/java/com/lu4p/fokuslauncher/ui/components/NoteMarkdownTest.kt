@@ -155,6 +155,40 @@ class NoteMarkdownTest {
     }
 
     @Test
+    fun insert_task_into_empty_note_fills_first_line() {
+        assertEquals("- [ ] " to 6, insertNoteTaskLine("", 0))
+    }
+
+    @Test
+    fun insert_task_at_end_adds_a_new_line() {
+        assertEquals("milk\n- [ ] " to 11, insertNoteTaskLine("milk", 4))
+    }
+
+    @Test
+    fun insert_task_mid_line_goes_after_the_cursor_line() {
+        assertEquals(
+                "milk\n- [ ] \neggs" to 11,
+                insertNoteTaskLine("milk\neggs", 2),
+        )
+    }
+
+    @Test
+    fun insert_task_reuses_a_blank_cursor_line() {
+        assertEquals("milk\n- [ ] \neggs" to 11, insertNoteTaskLine("milk\n\neggs", 5))
+        assertEquals("milk\n- [ ] " to 11, insertNoteTaskLine("milk\n   ", 7))
+    }
+
+    @Test
+    fun insert_task_after_an_unfinished_task_starts_another() {
+        assertEquals("- [ ] \n- [ ] " to 13, insertNoteTaskLine("- [ ] ", 6))
+    }
+
+    @Test
+    fun insert_task_clamps_an_out_of_range_cursor() {
+        assertEquals("milk\n- [ ] " to 11, insertNoteTaskLine("milk", 99))
+    }
+
+    @Test
     fun spans_never_set_a_color() {
         val rendered = renderNoteMarkdown("# H\n- [x] **b** *i* ~~s~~")
         assertTrue(rendered.spanStyles.isNotEmpty())

@@ -278,6 +278,7 @@
     <string name="settings_show_home_note">Show note</string>
     <string name="settings_show_home_note_subtitle">A short note on home — tap a task to tick it off, tap elsewhere or long-press to edit</string>
     <string name="home_note_edit_action">Edit note</string>
+    <string name="home_note_add_task">Add task</string>
     <string name="home_note_toggle_task">Toggle %1$s</string>
     <string name="home_note_placeholder">Tap to add a note</string>
     <string name="home_note_edit_title">Note</string>

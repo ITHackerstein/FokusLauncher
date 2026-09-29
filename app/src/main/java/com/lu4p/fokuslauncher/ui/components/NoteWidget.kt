@@ -4,7 +4,10 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -31,6 +34,8 @@ import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
@@ -165,16 +170,47 @@ fun HomeNoteEditDialog(
         onDismiss: () -> Unit,
         onSave: (String) -> Unit,
 ) {
-    var text by rememberSaveable(initialText) { mutableStateOf(initialText) }
+    var value by
+            rememberSaveable(initialText, stateSaver = TextFieldValue.Saver) {
+                mutableStateOf(TextFieldValue(initialText, TextRange(initialText.length)))
+            }
     val focusRequester = remember { FocusRequester() }
 
     FokusAlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text(stringResource(R.string.home_note_edit_title)) },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                            stringResource(R.string.home_note_edit_title),
+                            modifier = Modifier.weight(1f),
+                    )
+                    FokusIconButton(
+                            onClick = {
+                                val (text, cursor) =
+                                        insertNoteTaskLine(value.text, value.selection.max)
+                                if (text.length <= HOME_NOTE_MAX_LENGTH) {
+                                    value = TextFieldValue(text, TextRange(cursor))
+                                }
+                                focusRequester.requestFocus()
+                            },
+                            modifier = Modifier.testTag("note_add_task"),
+                    ) {
+                        LauncherIcon(
+                                Icons.Default.Add,
+                                stringResource(R.string.home_note_add_task),
+                                tint = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                }
+            },
             text = {
                 OutlinedTextField(
-                        value = text,
-                        onValueChange = { text = it.take(HOME_NOTE_MAX_LENGTH) },
+                        value = value,
+                        onValueChange = {
+                            value =
+                                    if (it.text.length <= HOME_NOTE_MAX_LENGTH) it
+                                    else it.copy(text = it.text.take(HOME_NOTE_MAX_LENGTH))
+                        },
                         placeholder = { Text(stringResource(R.string.home_note_edit_hint)) },
                         minLines = 4,
                         maxLines = 12,
@@ -186,7 +222,7 @@ fun HomeNoteEditDialog(
             },
             confirmButton = {
                 FokusTextButton(
-                        onClick = { onSave(text) },
+                        onClick = { onSave(value.text) },
                         modifier = Modifier.testTag("note_edit_save"),
                 ) {
                     Text(stringResource(R.string.action_save))
